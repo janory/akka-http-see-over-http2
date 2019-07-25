@@ -20,6 +20,10 @@ lazy val commonSettings = Seq(
 
 lazy val `akka-http-sse-over-http2` = project
   .in(file("."))
+  .enablePlugins(JavaAgent)
+  .settings(
+    javaAgents += "org.mortbay.jetty.alpn" % "jetty-alpn-agent" % "2.0.6"
+  )
   .settings(
     commonSettings,
     libraryDependencies ++= Dependencies.settings

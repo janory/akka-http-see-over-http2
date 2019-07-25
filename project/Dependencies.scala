@@ -3,7 +3,8 @@ import sbt._
 object Dependencies {
   // Versions
   lazy val akkaVersion            = "2.5.8"
-  lazy val akkHttpVersion         = "10.0.11"
+  lazy val akkaHttpVersion        = "10.0.11"
+  lazy val akkaHttp2Version       = "10.1.0-RC1"
   lazy val scalaTestVersion       = "3.0.4"
   lazy val logbackVersion         = "1.2.3"
   lazy val scalaPbVersion         = "0.6.7"
@@ -19,8 +20,9 @@ object Dependencies {
   val AkkaSlf4j                 = "com.typesafe.akka"      %% "akka-slf4j"                   % akkaVersion
   val AkkaTestkit               = "com.typesafe.akka"      %% "akka-testkit"                 % akkaVersion
   val AkkaStreamTestkit         = "com.typesafe.akka"      %% "akka-stream-testkit"          % akkaVersion
-  val AkkaHttp                  = "com.typesafe.akka"      %% "akka-http"                    % akkHttpVersion
-  val AkkaHttpTestkit           = "com.typesafe.akka"      %% "akka-http-testkit"            % akkHttpVersion
+  val AkkaHttp                  = "com.typesafe.akka"      %% "akka-http"                    % akkaHttpVersion
+  val AkkaHttp2                 = "com.typesafe.akka"      %% "akka-http2-support"           % akkaHttp2Version
+  val AkkaHttpTestkit           = "com.typesafe.akka"      %% "akka-http-testkit"            % akkaHttpVersion
   val ScalaTest                 = "org.scalatest"          %% "scalatest"                    % scalaTestVersion
   val LogbackClassic            = "ch.qos.logback"         % "logback-classic"               % logbackVersion
   val Java8Compat               = "org.scala-lang.modules" %% "scala-java8-compat"           % java8CompatVersion
@@ -36,7 +38,8 @@ object Dependencies {
   val settings = Seq(
     AkkaActor,
     AkkaStream,
-    AkkaHttp,
+//    AkkaHttp,
+    AkkaHttp2,
     AkkaSlf4j,
     AkkaHttpCirce,
     Java8Compat,
