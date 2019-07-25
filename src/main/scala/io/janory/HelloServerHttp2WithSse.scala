@@ -27,6 +27,8 @@ import scala.util.Random
 import akka.stream.OverflowStrategy
 import akka.stream.scaladsl._
 
+import scala.collection.immutable
+
 
 object HelloServerHttp2WithSse {
 
@@ -71,21 +73,27 @@ object HelloServerHttp2WithSse {
       .queue[String](100, overflowStrategy)
 //      .map(_ => LocalTime.now())
       .map(state => ServerSentEvent(state))
-      .mapMaterializedValue((queue: SourceQueueWithComplete[String]) => promise.trySuccess(queue))
+      .mapMaterializedValue((queue: SourceQueue[String]) => queue.watchCompletion())
     //      .keepAlive(1.second, () => ServerSentEvent.heartbeat)
 
     val testActor = actorSystem.actorOf(Props(new Actor {
-      var connections = Map.empty[String, ActorRef]
+      var connections = Map.empty[ActorRef, String]
 
       override def receive: Receive = {
-        case (connection: String, ref: ActorRef) => {
-          println(s"$connection connection added!")
-          connections += connection -> ref
+        case (connectionName: String, ref: ActorRef) => {
+          connections +=  ref -> connectionName
+          context.watch(ref)
+          println(s"$connectionName connection added!")
         }
         case message: String => {
-          println(s"got new message: $message")
-          connections.values.foreach(_ ! message)
+          connections.keys.foreach(_ ! message)
+          println(s"broadcasting new message: '$message' to all connections!")
         }
+        case Terminated(ref) =>
+          val connectionName = connections(ref)
+          connections -= ref
+          println(s"$connectionName connection terminated!")
+        case unkown => println(s"unkown message: $unkown")
       }
     }))
 
@@ -98,7 +106,9 @@ object HelloServerHttp2WithSse {
       val test: ToResponseMarshallable = Source.actorRef[String](100, OverflowStrategy.fail)
         .mapMaterializedValue(d)
         .map(msg => ServerSentEvent(msg))
-//        .mapMaterializedValue(ref => testActor.tell(UUID.randomUUID.toString,ref)).map(msg => ServerSentEvent(msg))
+        .keepAlive(1.second, () => ServerSentEvent.heartbeat)
+
+    //        .mapMaterializedValue(ref => testActor.tell(UUID.randomUUID.toString,ref)).map(msg => ServerSentEvent(msg))
 //        .mapMaterializedValue(testActor.tell("created",_)).map(msg => ServerSentEvent(msg))
 
 
@@ -116,6 +126,11 @@ object HelloServerHttp2WithSse {
         HttpResponse()
       }
     }
+
+    val testList = List(1,2,3)
+
+    val newL: immutable.Seq[String] = testList.map(_=> "")
+    val newL2: immutable.Seq[Char] = testList.flatMap(_=> "")
 
     val asyncHandler: HttpRequest => Future[HttpResponse] = {
       case req @ HttpRequest(GET, Uri.Path("/events"), _, _, _) => {
